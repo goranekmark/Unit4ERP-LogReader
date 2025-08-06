@@ -15,35 +15,35 @@
 #>
 function Read-Unit4ERPWebLog {
     param (
-            [parameter(Mandatory = $true, ValueFromPipeline = $true)]
-            [string]$LogPath
-        )
+        [parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string]$LogPath
+    )
     begin {
-            class Unit4ERPLogItem {
-                [string]$Time
-                [string]$Category 
-                [string]$Msg
-            }
-            $StartRowPattern = "====== EVENT ======"
-            $TimeStampPattern = "^\d\d:\d\d:\d\d \*\* "
-            $i = 0
-            $Log = Get-Content $LogPath
-            $StringBuilder = [System.Text.StringBuilder]::new()
+        class Unit4ERPLogItem {
+            [string]$Time
+            [string]$Category 
+            [string]$Msg
+        }
+        $StartRowPattern = '====== EVENT ======'
+        $TimeStampPattern = '^\d\d:\d\d:\d\d \*\* '
+        $i = 0
+        $Log = Get-Content $LogPath
+        $StringBuilder = [System.Text.StringBuilder]::new()
     }
     process {
         $Output = foreach ($l in $Log) {  
-            if ($l -match $StartRowPattern -and $l -ne "") {
+            if ($l -match $StartRowPattern -and $l -ne '') {
                 $Row = [Unit4ERPLogItem]::new()
             }
-            if ($l -match $TimeStampPattern -and $l -ne "") {
-                $Time = $l -split " \*\* " | Select-Object -First 1
-                $Category = $l -split " \*\* " | Select-Object -Skip 1
+            if ($l -match $TimeStampPattern -and $l -ne '') {
+                $Time = $l -split ' \*\* ' | Select-Object -First 1
+                $Category = $l -split ' \*\* ' | Select-Object -Skip 1
                 $Row.Time = $Time
                 $Row.Category = $Category
                 [void]$StringBuilder.Append($Msg)
                 
             }
-            if ($l -notmatch $StartRowPattern -and $l -notmatch $TimeStampPattern -and $l -ne "") {
+            if ($l -notmatch $StartRowPattern -and $l -notmatch $TimeStampPattern -and $l -ne '') {
                 [void]$StringBuilder.Append($l)
             }
 
@@ -56,8 +56,8 @@ function Read-Unit4ERPWebLog {
         }
     }
     end {
-            $Output 
-        }
+        $Output 
+    }
 }
 <#
 .SYNOPSIS
@@ -76,35 +76,35 @@ function Read-Unit4ERPWebLog {
 #>
 function Read-Unit4ERPLog {
     param (
-            [parameter(Mandatory = $true, ValueFromPipeline = $true)]
-            [string]$LogPath
-        )
+        [parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string]$LogPath
+    )
     begin {
-            class Unit4ERPLogItem {
-                [string]$Date
-                [string]$Time
-                [string]$Category 
-                [string]$Msg
-            }
-            $StartRowPattern = "^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d:*"
-            $i = 0
-            $Log = Get-Content $LogPath
-            $StringBuilder = [System.Text.StringBuilder]::new()
+        class Unit4ERPLogItem {
+            [string]$Date
+            [string]$Time
+            [string]$Category 
+            [string]$Msg
+        }
+        $StartRowPattern = '^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d:*'
+        $i = 0
+        $Log = Get-Content $LogPath
+        $StringBuilder = [System.Text.StringBuilder]::new()
     }
     process {
         $Output = foreach ($l in $Log) {  
-            if ($l -match $StartRowPattern -and $l -ne "") {
+            if ($l -match $StartRowPattern -and $l -ne '') {
                 $Row = [Unit4ERPLogItem]::new()
-                $Date, $Time = $l -split " " | Select-Object -First 2 
-                $AfterTimeAndDate = $l.Remove(0,20)
-                $Category = $AfterTimeAndDate -split ":" | Select-Object -First 1
-                $Msg = $AfterTimeAndDate -replace ($Category + ":")
+                $Date, $Time = $l -split ' ' | Select-Object -First 2 
+                $AfterTimeAndDate = $l.Remove(0, 20)
+                $Category = $AfterTimeAndDate -split ':' | Select-Object -First 1
+                $Msg = $AfterTimeAndDate -replace ($Category + ':')
                 $Row.Date = $Date
                 $Row.Time = $Time
                 $Row.Category = $Category
                 [void]$StringBuilder.Append($Msg)
             }
-            if ($l -notmatch $StartRowPattern -and $l -ne "") {
+            if ($l -notmatch $StartRowPattern -and $l -ne '') {
                 [void]$StringBuilder.Append($l)
             }
             if (($Log[$i + 1] -match $StartRowPattern) -or ($i -eq $Log.Count)) {
@@ -116,8 +116,8 @@ function Read-Unit4ERPLog {
         }
     }
     end {
-            $Output 
-        }
+        $Output 
+    }
 }
 <#
 .SYNOPSIS
@@ -133,21 +133,21 @@ function Read-Unit4ERPLog {
     $Result = Get-Unit4ERPLogElapsedAndAccumulatedTime -InputObject $Unit4ERPLog
 #>
 function Get-Unit4ERPLogElapsedAndAccumulatedTime {
-        param (
+    param (
         [object]$Unit4ERPLog
-        )
-        $withElapsedTime = $Unit4ERPLog | ForEach-Object -Begin {$i = 0} -Process {
-            $Preceding = $i - 1
-            $ElapsedMs = {(New-TimeSpan -Start ($Unit4ERPLog[$Preceding].Time) -End ($Unit4ERPLog[$i].Time)).TotalSeconds}
-            $AccumulatedTimeMs = {(New-TimeSpan -Start ($Unit4ERPLog[0].Time) -End ($Unit4ERPLog[$i].Time)).TotalSeconds}
-            Select-Object -InputObject $Unit4ERPLog[$i] -Property Date, Time, Category, Msg, 
-                @{
-                Name = "ElapsedSeconds"; Expression = $elapsedMs
-                }, 
-                @{Name = "AccumulatedTimeSeconds"; Expression = $AccumulatedTimeMs
-            }
-            $i++
-        } 
-        $withElapsedTime[0].ElapsedSeconds = 0
-        $withElapsedTime 
+    )
+    $withElapsedTime = $Unit4ERPLog | ForEach-Object -Begin { $i = 0 } -Process {
+        $Preceding = $i - 1
+        $ElapsedMs = { (New-TimeSpan -Start ($Unit4ERPLog[$Preceding].Time) -End ($Unit4ERPLog[$i].Time)).TotalSeconds }
+        $AccumulatedTimeMs = { (New-TimeSpan -Start ($Unit4ERPLog[0].Time) -End ($Unit4ERPLog[$i].Time)).TotalSeconds }
+        Select-Object -InputObject $Unit4ERPLog[$i] -Property Date, Time, Category, Msg, 
+        @{
+            Name = 'ElapsedSeconds'; Expression = $elapsedMs
+        }, 
+        @{Name = 'AccumulatedTimeSeconds'; Expression = $AccumulatedTimeMs
+        }
+        $i++
+    } 
+    $withElapsedTime[0].ElapsedSeconds = 0
+    $withElapsedTime 
 }
